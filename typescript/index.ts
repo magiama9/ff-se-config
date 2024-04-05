@@ -9,10 +9,13 @@ import { FlatfileListener } from "@flatfile/listener";
 import { recordHook, FlatfileRecord } from "@flatfile/plugin-record-hook";
 import { Client, FlatfileEvent } from "@flatfile/listener";
 import api from "@flatfile/api";
+import { PhoneNumberUtil } from "google-libphonenumber";
 import axios from "axios";
 
 // TODO: Update this with your webhook.site URL for Part 4
 const webhookReceiver = process.env.WEBHOOK_SITE_URL || "YOUR_WEBHOOK_URL";
+
+const phoneUtil_ = PhoneNumberUtil.getInstance();
 
 export default function flatfileEventListener(listener: Client) {
   // Part 1: Setup a listener (https://flatfile.com/docs/apps/custom/meet-the-listener)
@@ -21,9 +24,9 @@ export default function flatfileEventListener(listener: Client) {
     console.log(`Received event: ${event.topic}`);
   });
 
-  listener.namespace(["space:red"], (red: FlatfileListener) => {
+  listener.namespace(["space:config"], (config: FlatfileListener) => {
     // Part 2: Configure a Space (https://flatfile.com/docs/apps/custom)
-    red
+    config
       .filter({ job: "space:configure" })
       .on("job:ready", async (event: FlatfileEvent) => {
         const { spaceId, environmentId, jobId } = event.context;
@@ -138,7 +141,7 @@ export default function flatfileEventListener(listener: Client) {
       });
 
     // Part 3: Transform and validate (https://flatfile.com/docs/apps/custom/add-data-transformation)
-    red.use(
+    config.use(
       recordHook("contacts", (record: FlatfileRecord) => {
         // Validate and transform a Record's first name
         const value = record.get("firstName");
@@ -156,12 +159,33 @@ export default function flatfileEventListener(listener: Client) {
           record.addError("email", "Invalid email address");
         }
 
+        const phoneNumber = record.get("phoneNumber") as string;
+
+        try {
+          const parsedNumber = phoneUtil_.parseAndKeepRawInput(
+            phoneNumber,
+            "US"
+          );
+          if (!phoneUtil_.isPossibleNumber(parsedNumber)) {
+            console.log("Invalid phone number");
+            record.addError("phoneNumber", "Invalid phone number");
+          } else {
+            if (!phoneUtil_.isValidNumber(parsedNumber)) {
+              console.log("Invalid phone number");
+              record.addError("phoneNumber", "Invalid phone number");
+            }
+          }
+        } catch (e) {
+          console.log(e.toString());
+          record.addError("phoneNumber", e.toString());
+        }
+
         return record;
       })
     );
 
     // Part 4: Configure a submit Action (https://flatfile.com/docs/apps/custom/submit-action)
-    red
+    config
       .filter({ job: "workbook:submitAction" })
       .on("job:ready", async (event: FlatfileEvent) => {
         const { context, payload } = event;
