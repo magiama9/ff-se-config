@@ -9,9 +9,12 @@ import { FlatfileListener, FlatfileEvent } from "@flatfile/listener";
 import { FlatfileRecord } from "@flatfile/hooks";
 import { recordHook } from "@flatfile/plugin-record-hook";
 import { dedupePlugin } from "@flatfile/plugin-dedupe";
+import { configureSpace } from "@flatfile/plugin-space-configure";
 import api from "@flatfile/api";
 import { PhoneNumberUtil } from "google-libphonenumber";
 import axios from "axios";
+
+import { contactsSheet } from "./contactsSheet";
 
 // TODO: Update this with your webhook.site URL for Part 4
 const webhookReceiver = process.env.WEBHOOK_SITE_URL || "YOUR_WEBHOOK_URL";
@@ -25,65 +28,16 @@ export default function flatfileEventListener(listener: FlatfileListener) {
   });
 
   listener.namespace(["space:config"], (config: FlatfileListener) => {
-    config
-      .filter({ job: "space:configure" })
-      .on("job:ready", async (event: FlatfileEvent) => {
-        const { spaceId, environmentId, jobId } = event.context;
-        try {
-          await api.jobs.ack(jobId, {
-            info: "Gettin started.",
-            progress: 10,
-          });
-
-          await api.workbooks.create({
-            spaceId,
-            environmentId,
+    // Configures space using plugin-space-configure
+    // Sheets are imported as separate files and can be extended
+    // Note that actions can exist in this config as a workbook level action, or in the sheet config as a sheet level action
+    config.use(
+      configureSpace({
+        workbooks: [
+          {
             name: "All Data",
             labels: ["pinned"],
-            sheets: [
-              {
-                name: "Contacts",
-                slug: "contacts",
-                fields: [
-                  {
-                    key: "firstName",
-                    type: "string",
-                    label: "First Name",
-                  },
-                  {
-                    key: "lastName",
-                    type: "string",
-                    label: "Last Name",
-                  },
-                  {
-                    key: "email",
-                    type: "string",
-                    label: "Email",
-                  },
-                ],
-              },
-              {
-                name: "Sheet 2",
-                slug: "sheet2",
-                fields: [
-                  {
-                    key: "firstName",
-                    type: "string",
-                    label: "First Name",
-                  },
-                  {
-                    key: "lastName",
-                    type: "string",
-                    label: "Last Name",
-                  },
-                  {
-                    key: "email",
-                    type: "string",
-                    label: "Email",
-                  },
-                ],
-              },
-            ],
+            sheets: [contactsSheet],
             actions: [
               {
                 operation: "submitAction",
@@ -93,51 +47,35 @@ export default function flatfileEventListener(listener: FlatfileListener) {
                 primary: true,
               },
             ],
-          });
-
-          const doc = await api.documents.create(spaceId, {
-            title: "Getting Started",
-            body:
-              "# Welcome\n" +
-              "### Say hello to your first customer Space in the new Flatfile!\n" +
-              "Let's begin by first getting acquainted with what you're seeing in your Space initially.\n" +
-              "---\n",
-          });
-
-          await api.spaces.update(spaceId, {
-            environmentId,
-            metadata: {
-              theme: {
-                root: {
-                  primaryColor: "red",
-                },
-                sidebar: {
-                  backgroundColor: "red",
-                  textColor: "white",
-                  activeTextColor: "midnightblue",
-                },
-                // See reference for all possible variables
+          },
+        ],
+        space: {
+          metadata: {
+            theme: {
+              root: {
+                primaryColor: "midnightblue",
+              },
+              sidebar: {
+                backgroundColor: "midnightblue",
+                titleColor: "white",
+                textColor: "white",
+                activeTextColor: "red",
               },
             },
-          });
-
-          await api.jobs.complete(jobId, {
-            outcome: {
-              message: "Your Space was created. Let's get started.",
-              acknowledge: true,
-            },
-          });
-        } catch (error) {
-          console.error("Error:", error.stack);
-
-          await api.jobs.fail(jobId, {
-            outcome: {
-              message: "Creating a Space encountered an error. See Event Logs.",
-              acknowledge: true,
-            },
-          });
-        }
-      });
+          },
+        },
+        documents: [
+          {
+            title: "SE Config Exercise",
+            body:
+              "# Welcome\n" +
+              "### Solutions Engineering Configuration Exercise!\n" +
+              "This is a custom extension of the getting started with Flatfile config.\n" +
+              "---\n",
+          },
+        ],
+      })
+    );
 
     // Customer Requirement - Deduplicate records based on a field
     // Note: Currently implements dedupe plugin version 0.1.1
