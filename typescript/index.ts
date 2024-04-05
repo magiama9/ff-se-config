@@ -5,9 +5,10 @@
  * To see all of Flatfile's code examples go to: https://github.com/FlatFilers/flatfile-docs-kitchen-sink
  */
 
-import { FlatfileListener } from "@flatfile/listener";
-import { recordHook, FlatfileRecord } from "@flatfile/plugin-record-hook";
-import { Client, FlatfileEvent } from "@flatfile/listener";
+import { FlatfileListener, FlatfileEvent } from "@flatfile/listener";
+import { FlatfileRecord } from "@flatfile/hooks";
+import { recordHook } from "@flatfile/plugin-record-hook";
+import { dedupePlugin } from "@flatfile/plugin-dedupe";
 import api from "@flatfile/api";
 import { PhoneNumberUtil } from "google-libphonenumber";
 import axios from "axios";
@@ -17,15 +18,13 @@ const webhookReceiver = process.env.WEBHOOK_SITE_URL || "YOUR_WEBHOOK_URL";
 
 const phoneUtil_ = PhoneNumberUtil.getInstance();
 
-export default function flatfileEventListener(listener: Client) {
-  // Part 1: Setup a listener (https://flatfile.com/docs/apps/custom/meet-the-listener)
+export default function flatfileEventListener(listener: FlatfileListener) {
   listener.on("**", (event: FlatfileEvent) => {
     // Log all events
     console.log(`Received event: ${event.topic}`);
   });
 
   listener.namespace(["space:config"], (config: FlatfileListener) => {
-    // Part 2: Configure a Space (https://flatfile.com/docs/apps/custom)
     config
       .filter({ job: "space:configure" })
       .on("job:ready", async (event: FlatfileEvent) => {
@@ -140,6 +139,17 @@ export default function flatfileEventListener(listener: Client) {
         }
       });
 
+    // Customer Requirement - Deduplicate records based on a field
+    // Note: Currently implements dedupe plugin version 0.1.1
+    // Version ^1.0.0 returns an unhandled type error
+    config.use(
+      // Action must be configured on SHEET level, not WORKBOOK level
+      dedupePlugin("dedupe-email", {
+        on: "email",
+        keep: "last",
+      })
+    );
+
     // Part 3: Transform and validate (https://flatfile.com/docs/apps/custom/add-data-transformation)
     config.use(
       recordHook("contacts", (record: FlatfileRecord) => {
@@ -161,11 +171,16 @@ export default function flatfileEventListener(listener: Client) {
 
         const phoneNumber = record.get("phoneNumber") as string;
 
+        // Tries to parse the number using google-libphonenumber
+        // Current behavior returns an error on an empty number. Wrap this try/catch block in a null check on phoneNumber if you want to consider empty phone number as valid
         try {
+          // Parses in the context of US numbers(e.g. doesn't require a country code, but can work with valid country codes (+1, etc))
           const parsedNumber = phoneUtil_.parseAndKeepRawInput(
             phoneNumber,
             "US"
           );
+          // isPossibleNumber is a faster check than isValidNumber
+          // Only if it's possible do we move onto checking validity
           if (!phoneUtil_.isPossibleNumber(parsedNumber)) {
             console.log("Invalid phone number");
             record.addError("phoneNumber", "Invalid phone number");
