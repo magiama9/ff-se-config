@@ -85,12 +85,11 @@ listener.use(
 
 ## Requirement Three - Streamlined Space Creation
 
-Space creation is streamlined through the use of [plugin-space-configure](https://github.com/FlatFilers/flatfile-plugins/tree/main/plugins/space-configure).
+Space creation is streamlined through the use of [plugin-space-configure](https://github.com/FlatFilers/flatfile-plugins/tree/main/plugins/space-configure). Additional sheets can be created and imported in the same manner as the `contactsSheet` in the example.
 
 ```ts
 //...
-
-import { contactsSheet } from "./contactsSheet"
+import { contactsSheet } from "./contactsSheet";
 import { configureSpace } from "@flatfile/plugin-space-configure";
 //...
 
@@ -141,23 +140,63 @@ listener.use(
 );
 ```
 
+```ts
+import { Flatfile } from "@flatfile/api";
+
+export const contactsSheet: Flatfile.SheetConfig = {
+  name: "Contacts",
+  slug: "contacts",
+  fields: [
+    {
+      key: "firstName",
+      type: "string",
+      label: "First Name",
+    },
+    {
+      key: "lastName",
+      type: "string",
+      label: "Last Name",
+    },
+    {
+      key: "email",
+      type: "string",
+      label: "Email",
+    },
+    {
+      key: "phoneNumber",
+      type: "string",
+      label: "Phone Number",
+    },
+  ],
+  actions: [
+    {
+      operation: "dedupe-email",
+      mode: "background",
+      label: "Remove Duplicate Emails",
+      description: "Remove duplicate emails",
+    },
+  ],
+};
+```
+
 # Part 2: Building a Custom Plugin
+
 Stop your currently running listener if it's still running, and run `npx flatfile@latest develop typescript/graphql-config/index.ts` to start the new listener that implements converting GraphQL schemas to Flatfile Blueprints. While this listener is running, try creating a new space from the dashboard (again, using the "config" namespace).
 
 You can find the instructions and limitations for usage in the [README](https://github.com/magiama9/ff-se-config/blob/main/typescript/graphql-config/README.md) for the implementation.
 
- By default, the listener is fetching the schema used by the [Star Wars API](https://studio.apollographql.com/public/star-wars-swapi/variant/current/home) and converting that into a custom Space. You can try commenting out the current code block and uncommenting the others to see how different use cases are handled (e.g. reading schemas from a file, or from a schema instance).
+By default, the listener is fetching the schema used by the [Star Wars API](https://studio.apollographql.com/public/star-wars-swapi/variant/current/home) and converting that into a custom Space. You can try commenting out the current code block and uncommenting the others to see how different use cases are handled (e.g. reading schemas from a file, or from a schema instance).
 
- This is very much an initial implementation of this functionality. Notably, the "LIST" type in a GraphQL schema is handled very naively, and Enums, Interfaces, and Unions aren't handled at all. 
+This is very much an initial implementation of this functionality. Notably, the "LIST" type in a GraphQL schema is handled very naively, and Enums, Interfaces, and Unions aren't handled at all.
 
- ### Roadmap for plugin improvement
+### Roadmap for plugin improvement
 
- • References - References should perform a vlookup type operation to return a usable value, rather than an id
+• References - References should perform a vlookup type operation to return a usable value, rather than an id
 
- • Lists - Flatfile doesn't natively handle has-many relationships. Lists should perhaps implement a filtering and concatenation of another sheet's records
+• Lists - Flatfile doesn't natively handle has-many relationships. Lists should perhaps implement a filtering and concatenation of another sheet's records
 
- • Enums - Enums should be implemented using the Flatfile Enum type
+• Enums - Enums should be implemented using the Flatfile Enum type
 
- • Creation streamlining - A user should be probably able to upload a graphQL schema on creating an instance of an app/space. 
+• Creation streamlining - A user should be probably able to upload a graphQL schema on creating an instance of an app/space.
 
- • Interfaces and Unions - These should be implemented, but I am not sure of the exact customer use cases, so I would want to learn that before proceeding with implementation.
+• Interfaces and Unions - These should be implemented, but I am not sure of the exact customer use cases, so I would want to learn that before proceeding with implementation.
