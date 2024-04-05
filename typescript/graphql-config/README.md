@@ -38,7 +38,7 @@ Example usage for configuring a space from a GraphQL SDL file
 Example usage for configuring a space from a GraphQL schema instance
 
 ```ts
-    config.use(
+    listener.use(
       configureSpaceGraphQL({
         workbooks: [
           { name: "GraphQL Workbook From Schema", source: sampleSchema },
