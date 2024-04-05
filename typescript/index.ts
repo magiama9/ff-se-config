@@ -11,13 +11,13 @@ import { recordHook } from "@flatfile/plugin-record-hook";
 import { dedupePlugin } from "@flatfile/plugin-dedupe";
 import { configureSpace } from "@flatfile/plugin-space-configure";
 import api from "@flatfile/api";
+
 import { PhoneNumberUtil } from "google-libphonenumber";
 import axios from "axios";
 
 import { contactsSheet } from "./contactsSheet";
 
-// TODO: Update this with your webhook.site URL for Part 4
-const webhookReceiver = process.env.WEBHOOK_SITE_URL || "YOUR_WEBHOOK_URL";
+const webhookReceiver = process.env.WEBHOOK_SITE_URL || "https://webhook.site/2a273bd9-5784-4ab3-8916-0ca019fb4c06";
 
 const phoneUtil_ = PhoneNumberUtil.getInstance();
 
