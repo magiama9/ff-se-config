@@ -7,6 +7,7 @@ import { FlatfileListener, FlatfileEvent } from "@flatfile/listener";
 import { configureSpaceGraphQL } from "../graphql-plugin";
 import { GraphQLSchema, GraphQLObjectType, GraphQLString } from "graphql";
 import * as fs from "fs";
+import * as path from "path";
 
 export default function flatfileEventListener(listener: FlatfileListener) {
   listener.on("**", (event: FlatfileEvent) => {
@@ -29,12 +30,19 @@ export default function flatfileEventListener(listener: FlatfileListener) {
     );
 
     // Example usage for configuring a space from a GraphQL SDL file
+    // const schemaPath = path.join(
+    //   __dirname,
+    //   "..",
+    //   "typescript",
+    //   "graphql-config",
+    //   "sampleSchemaTwo.graphql"
+    // );
     // config.use(
     //   configureSpaceGraphQL({
     //     workbooks: [
     //       {
     //         name: "GraphQL Workbook From File",
-    //         source: fs.readFileSync("./sampleSchemaTwo.graphql", "utf8"),
+    //         source: fs.readFileSync(schemaPath, "utf8"),
     //       },
     //     ],
     //   })
