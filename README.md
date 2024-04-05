@@ -36,7 +36,7 @@ import { dedupePlugin } from "@flatfile/plugin-dedupe";
 
 //...
 
-config.use(
+listener.use(
   // Action must be configured on SHEET level, not WORKBOOK level
   dedupePlugin("dedupe-email", {
     on: "email",
