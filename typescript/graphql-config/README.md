@@ -5,7 +5,7 @@ This is a plugin that can turn a GraphQL schema into a Flatfile Blueprint and us
 ### Usage - Schema URL
 Example usage for configuring a space from a GraphQL endpoint
 
-```
+```ts
     listener.use(
       configureSpaceGraphQL({
         workbooks: [
@@ -21,7 +21,7 @@ Example usage for configuring a space from a GraphQL endpoint
 
 ### Usage - Schema File
 Example usage for configuring a space from a GraphQL SDL file
-```
+```ts
      listener.use(
        configureSpaceGraphQL({
          workbooks: [
@@ -37,7 +37,7 @@ Example usage for configuring a space from a GraphQL SDL file
 ### Usage - Schema Instance
 Example usage for configuring a space from a GraphQL schema instance
 
-```
+```ts
     config.use(
       configureSpaceGraphQL({
         workbooks: [
